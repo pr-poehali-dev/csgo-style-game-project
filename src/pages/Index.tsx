@@ -97,9 +97,8 @@ const Index = () => {
   }, [handleKeyPress]);
 
   const buyWeapon = (weapon: WeaponItem) => {
-    if (money >= weapon.price && !inventory.find(w => w.id === weapon.id)) {
+    if (money >= weapon.price) {
       setMoney(prev => prev - weapon.price);
-      setInventory(prev => [...prev, weapon]);
       setCurrentWeapon(weapon);
       setAmmo(weapon.ammo);
       setMaxAmmo(weapon.ammo);
@@ -107,10 +106,10 @@ const Index = () => {
     }
   };
 
-  const shopBuyWeapon = (weapon: WeaponItem) => {
-    if (playerStats.balance >= weapon.price && !inventory.find(w => w.id === weapon.id)) {
-      setPlayerStats(prev => ({ ...prev, balance: prev.balance - weapon.price }));
-      setInventory(prev => [...prev, weapon]);
+  const shopBuyWeapon = (skin: WeaponSkin) => {
+    if (playerStats.balance >= skin.price && !inventory.find(w => w.id === skin.id)) {
+      setPlayerStats(prev => ({ ...prev, balance: prev.balance - skin.price }));
+      setInventory(prev => [...prev, skin]);
     }
   };
 
@@ -179,6 +178,19 @@ const Index = () => {
         </Button>
 
         <Button
+          onClick={() => setScreen('cases')}
+          size="lg"
+          variant="outline"
+          className="h-24 text-xl font-bold border-2 hover:bg-accent/10 relative overflow-hidden group"
+        >
+          <span className="relative z-10 flex items-center">
+            <Icon name="Gift" size={24} className="mr-2" />
+            Кейсы
+          </span>
+          <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </Button>
+
+        <Button
           onClick={() => setScreen('settings')}
           size="lg"
           variant="outline"
@@ -236,48 +248,73 @@ const Index = () => {
 
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="mb-8">
-            <TabsTrigger value="all">Всё оружие</TabsTrigger>
+            <TabsTrigger value="all">Все скины</TabsTrigger>
             <TabsTrigger value="rifle">Винтовки</TabsTrigger>
             <TabsTrigger value="pistol">Пистолеты</TabsTrigger>
             <TabsTrigger value="sniper">Снайперские</TabsTrigger>
             <TabsTrigger value="knife">Ножи</TabsTrigger>
+            <TabsTrigger value="gloves">Перчатки</TabsTrigger>
           </TabsList>
 
-          {['all', 'rifle', 'pistol', 'sniper', 'knife'].map(category => (
+          {['all', 'rifle', 'pistol', 'sniper', 'knife', 'gloves'].map(category => (
             <TabsContent key={category} value={category}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {weapons
-                  .filter(w => category === 'all' || w.category === category)
-                  .map(weapon => (
-                    <Card key={weapon.id} className="weapon-card p-6 border-2 relative">
-                      {inventory.find(w => w.id === weapon.id) && (
-                        <Badge className="absolute top-2 right-2 bg-green-500">Куплено</Badge>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {weaponSkins
+                  .filter(s => category === 'all' || s.category === category)
+                  .sort((a, b) => b.price - a.price)
+                  .map(skin => (
+                    <Card 
+                      key={skin.id} 
+                      className="weapon-card p-0 border-2 overflow-hidden relative"
+                      style={{ borderColor: rarityColors[skin.rarity] }}
+                    >
+                      {inventory.find(w => w.id === skin.id) && (
+                        <Badge className="absolute top-4 right-4 bg-green-500 z-10">Куплено</Badge>
                       )}
-                      <div className="text-6xl mb-4 text-center">{weapon.icon}</div>
-                      <h3 className="text-2xl font-bold mb-2">{weapon.name}</h3>
-                      <div className="space-y-2 mb-4">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Урон:</span>
-                          <span className="font-bold">{weapon.damage}</span>
-                        </div>
-                        {weapon.ammo > 0 && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Патроны:</span>
-                            <span className="font-bold">{weapon.ammo}</span>
+                      <div 
+                        className="h-2 w-full"
+                        style={{ background: `linear-gradient(90deg, ${rarityColors[skin.rarity]}, ${rarityColors[skin.rarity]}99)` }}
+                      />
+                      
+                      <div className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-bold text-lg leading-tight mb-1">{skin.weaponName}</h3>
+                            <p className="text-sm text-muted-foreground">{skin.skinName}</p>
                           </div>
-                        )}
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Цена:</span>
-                          <span className="font-bold text-accent">${weapon.price}</span>
+                          {skin.statTrak && (
+                            <Badge className="bg-orange-500 text-xs">ST™</Badge>
+                          )}
                         </div>
+
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge 
+                            variant="outline" 
+                            className="text-xs"
+                            style={{ borderColor: rarityColors[skin.rarity], color: rarityColors[skin.rarity] }}
+                          >
+                            {rarityNames[skin.rarity]}
+                          </Badge>
+                          {skin.wear && (
+                            <Badge variant="secondary" className="text-xs">
+                              {getWearName(skin.wear)}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm mb-3">
+                          <span className="text-muted-foreground">Стоимость:</span>
+                          <span className="font-bold text-accent">${skin.price.toLocaleString()}</span>
+                        </div>
+
+                        <Button
+                          onClick={() => shopBuyWeapon(skin)}
+                          disabled={playerStats.balance < skin.price || !!inventory.find(w => w.id === skin.id)}
+                          className="w-full"
+                        >
+                          {inventory.find(w => w.id === skin.id) ? 'Куплено' : 'Купить'}
+                        </Button>
                       </div>
-                      <Button
-                        onClick={() => shopBuyWeapon(weapon)}
-                        disabled={playerStats.balance < weapon.price || !!inventory.find(w => w.id === weapon.id)}
-                        className="w-full"
-                      >
-                        {inventory.find(w => w.id === weapon.id) ? 'Куплено' : 'Купить'}
-                      </Button>
                     </Card>
                   ))}
               </div>
@@ -366,48 +403,216 @@ const Index = () => {
     </div>
   );
 
+  const getWearName = (wear?: number) => {
+    if (!wear) return '';
+    if (wear < 0.07) return 'FN';
+    if (wear < 0.15) return 'MW';
+    if (wear < 0.38) return 'FT';
+    if (wear < 0.45) return 'WW';
+    return 'BS';
+  };
+
   const renderInventory = () => (
-    <div className="min-h-screen p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen p-8 bg-gradient-to-b from-background to-muted/20">
+      <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-5xl font-bold">Инвентарь</h1>
+          <div>
+            <h1 className="text-5xl font-bold mb-2">Инвентарь</h1>
+            <p className="text-xl text-muted-foreground">Всего предметов: {inventory.length} | Общая стоимость: ${inventory.reduce((sum, item) => sum + item.price, 0).toLocaleString()}</p>
+          </div>
           <Button onClick={() => setScreen('menu')} variant="outline" size="lg">
             <Icon name="ArrowLeft" className="mr-2" />
             Назад
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {inventory.map(weapon => (
-            <Card key={weapon.id} className="weapon-card p-6 border-2">
-              <div className="text-6xl mb-4 text-center">{weapon.icon}</div>
-              <h3 className="text-2xl font-bold mb-2">{weapon.name}</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Урон:</span>
-                  <span className="font-bold">{weapon.damage}</span>
-                </div>
-                {weapon.ammo > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Патроны:</span>
-                    <span className="font-bold">{weapon.ammo}</span>
-                  </div>
-                )}
-                <Badge className="w-full justify-center bg-green-500 mt-4">В собственности</Badge>
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="mb-8">
+            <TabsTrigger value="all">Всё ({inventory.length})</TabsTrigger>
+            <TabsTrigger value="rifle">Винтовки ({inventory.filter(i => i.category === 'rifle').length})</TabsTrigger>
+            <TabsTrigger value="pistol">Пистолеты ({inventory.filter(i => i.category === 'pistol').length})</TabsTrigger>
+            <TabsTrigger value="sniper">Снайперские ({inventory.filter(i => i.category === 'sniper').length})</TabsTrigger>
+            <TabsTrigger value="knife">Ножи ({inventory.filter(i => i.category === 'knife').length})</TabsTrigger>
+            <TabsTrigger value="gloves">Перчатки ({inventory.filter(i => i.category === 'gloves').length})</TabsTrigger>
+          </TabsList>
+
+          {['all', 'rifle', 'pistol', 'sniper', 'knife', 'gloves'].map(category => (
+            <TabsContent key={category} value={category}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {inventory
+                  .filter(item => category === 'all' || item.category === category)
+                  .sort((a, b) => b.price - a.price)
+                  .map(skin => (
+                    <Card 
+                      key={skin.id} 
+                      className="weapon-card p-0 border-2 overflow-hidden cursor-pointer group relative"
+                      style={{ borderColor: rarityColors[skin.rarity] }}
+                      onClick={() => {
+                        setSelectedSkin(skin);
+                        setInspectMode(true);
+                      }}
+                    >
+                      <div 
+                        className="h-2 w-full"
+                        style={{ background: `linear-gradient(90deg, ${rarityColors[skin.rarity]}, ${rarityColors[skin.rarity]}99)` }}
+                      />
+                      
+                      <div className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-bold text-lg leading-tight mb-1">{skin.weaponName}</h3>
+                            <p className="text-sm text-muted-foreground">{skin.skinName}</p>
+                          </div>
+                          {skin.statTrak && (
+                            <Badge className="bg-orange-500 text-xs">ST™</Badge>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 mb-3">
+                          <Badge 
+                            variant="outline" 
+                            className="text-xs"
+                            style={{ borderColor: rarityColors[skin.rarity], color: rarityColors[skin.rarity] }}
+                          >
+                            {rarityNames[skin.rarity]}
+                          </Badge>
+                          {skin.wear && (
+                            <Badge variant="secondary" className="text-xs">
+                              {getWearName(skin.wear)}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm mb-2">
+                          <span className="text-muted-foreground">Состояние:</span>
+                          <span className="font-bold">{skin.wear ? (skin.wear * 100).toFixed(2) + '%' : '—'}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm mb-3">
+                          <span className="text-muted-foreground">Стоимость:</span>
+                          <span className="font-bold text-accent">${skin.price.toLocaleString()}</span>
+                        </div>
+
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                        >
+                          <Icon name="Eye" size={16} className="mr-2" />
+                          Осмотреть
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
               </div>
-            </Card>
+            </TabsContent>
           ))}
-          {inventory.length === 0 && (
-            <div className="col-span-full text-center py-20">
-              <Icon name="Package" size={64} className="mx-auto mb-4 text-muted-foreground" />
-              <p className="text-2xl text-muted-foreground">Инвентарь пуст</p>
-              <Button onClick={() => setScreen('shop')} className="mt-4" size="lg">
+        </Tabs>
+
+        {inventory.length === 0 && (
+          <div className="text-center py-20">
+            <Icon name="Package" size={64} className="mx-auto mb-4 text-muted-foreground" />
+            <p className="text-2xl text-muted-foreground mb-4">Инвентарь пуст</p>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={() => setScreen('shop')} size="lg">
+                <Icon name="ShoppingCart" className="mr-2" />
                 Перейти в магазин
               </Button>
+              <Button onClick={() => setScreen('cases')} size="lg" variant="outline">
+                <Icon name="Package" className="mr-2" />
+                Открыть кейсы
+              </Button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+
+      {inspectMode && selectedSkin && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-8" onClick={() => setInspectMode(false)}>
+          <Card className="max-w-4xl w-full p-8 border-4" style={{ borderColor: rarityColors[selectedSkin.rarity] }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-4xl font-bold mb-2">{selectedSkin.weaponName}</h2>
+                <p className="text-2xl text-muted-foreground">{selectedSkin.skinName}</p>
+              </div>
+              <Button onClick={() => setInspectMode(false)} variant="ghost" size="sm">
+                <Icon name="X" size={24} />
+              </Button>
+            </div>
+
+            <div className="bg-gradient-to-br from-muted to-background rounded-lg p-12 mb-6 flex items-center justify-center min-h-[300px] border-2" style={{ borderColor: rarityColors[selectedSkin.rarity] + '40' }}>
+              <div className="text-9xl animate-pulse">
+                {selectedSkin.category === 'knife' ? '🗡️' : selectedSkin.category === 'gloves' ? '🧤' : '🔫'}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div>
+                <h3 className="text-lg font-bold mb-3">Характеристики</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Редкость:</span>
+                    <span className="font-bold" style={{ color: rarityColors[selectedSkin.rarity] }}>
+                      {rarityNames[selectedSkin.rarity]}
+                    </span>
+                  </div>
+                  {selectedSkin.wear && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Состояние:</span>
+                        <span className="font-bold">{getWearName(selectedSkin.wear)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Float:</span>
+                        <span className="font-bold">{selectedSkin.wear.toFixed(4)}</span>
+                      </div>
+                    </>
+                  )}
+                  {selectedSkin.statTrak && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">StatTrak™:</span>
+                      <span className="font-bold text-orange-500">Да</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-bold mb-3">Игровые параметры</h3>
+                <div className="space-y-2">
+                  {selectedSkin.damage > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Урон:</span>
+                      <span className="font-bold">{selectedSkin.damage}</span>
+                    </div>
+                  )}
+                  {selectedSkin.ammo > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Магазин:</span>
+                      <span className="font-bold">{selectedSkin.ammo}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Стоимость:</span>
+                    <span className="font-bold text-accent">${selectedSkin.price.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <Button className="flex-1" size="lg">
+                <Icon name="Zap" className="mr-2" />
+                Экипировать
+              </Button>
+              <Button className="flex-1" variant="outline" size="lg">
+                <Icon name="Store" className="mr-2" />
+                Продать на рынке
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 
@@ -717,12 +922,151 @@ const Index = () => {
     </div>
   );
 
+  const renderCases = () => {
+    const cases = [
+      { id: 'chroma', name: 'Chroma Case', price: 2500, icon: '📦', color: '#4b69ff' },
+      { id: 'operation', name: 'Operation Case', price: 3500, icon: '🎁', color: '#8847ff' },
+      { id: 'dreams', name: 'Dreams & Nightmares', price: 1800, icon: '💫', color: '#d32ce6' },
+      { id: 'revolution', name: 'Revolution Case', price: 2200, icon: '⚡', color: '#eb4b4b' },
+    ];
+
+    const [opening, setOpening] = useState(false);
+    const [wonSkin, setWonSkin] = useState<WeaponSkin | null>(null);
+
+    const openCase = (caseItem: typeof cases[0]) => {
+      if (playerStats.balance < caseItem.price) return;
+      
+      setPlayerStats(prev => ({ ...prev, balance: prev.balance - caseItem.price }));
+      setOpening(true);
+
+      setTimeout(() => {
+        const availableSkins = weaponSkins.filter(s => !inventory.find(i => i.id === s.id));
+        const randomSkin = availableSkins[Math.floor(Math.random() * availableSkins.length)];
+        setWonSkin(randomSkin);
+        setInventory(prev => [...prev, randomSkin]);
+        setOpening(false);
+      }, 3000);
+    };
+
+    return (
+      <div className="min-h-screen p-8 bg-gradient-to-b from-background to-muted/20">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-5xl font-bold mb-2">Открытие кейсов</h1>
+              <p className="text-xl text-muted-foreground">Баланс: <span className="text-accent font-bold">${playerStats.balance}</span></p>
+            </div>
+            <Button onClick={() => setScreen('menu')} variant="outline" size="lg">
+              <Icon name="ArrowLeft" className="mr-2" />
+              Назад
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {cases.map(caseItem => (
+              <Card 
+                key={caseItem.id}
+                className="p-6 border-4 cursor-pointer transition-all hover:scale-105 hover:shadow-2xl"
+                style={{ borderColor: caseItem.color }}
+                onClick={() => openCase(caseItem)}
+              >
+                <div className="text-center">
+                  <div className="text-8xl mb-4 animate-pulse">{caseItem.icon}</div>
+                  <h3 className="text-2xl font-bold mb-2">{caseItem.name}</h3>
+                  <Badge className="text-lg px-4 py-2 mb-4" style={{ backgroundColor: caseItem.color }}>
+                    ${caseItem.price}
+                  </Badge>
+                  <Button 
+                    className="w-full" 
+                    disabled={playerStats.balance < caseItem.price}
+                  >
+                    <Icon name="Unlock" className="mr-2" />
+                    Открыть
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {opening && (
+            <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-9xl mb-8 animate-bounce">📦</div>
+                <h2 className="text-4xl font-bold mb-4">Открываем кейс...</h2>
+                <Progress value={66} className="w-64 mx-auto h-4" />
+              </div>
+            </div>
+          )}
+
+          {wonSkin && !opening && (
+            <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-8" onClick={() => setWonSkin(null)}>
+              <Card 
+                className="max-w-2xl w-full p-12 border-4 text-center animate-scale-in"
+                style={{ borderColor: rarityColors[wonSkin.rarity] }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-6xl mb-6">🎉</div>
+                <h2 className="text-5xl font-bold mb-4">Поздравляем!</h2>
+                <div 
+                  className="text-3xl font-bold mb-6"
+                  style={{ color: rarityColors[wonSkin.rarity] }}
+                >
+                  {rarityNames[wonSkin.rarity]}
+                </div>
+                <div className="bg-gradient-to-br from-muted to-background rounded-lg p-8 mb-6 border-2" style={{ borderColor: rarityColors[wonSkin.rarity] }}>
+                  <div className="text-8xl mb-4">
+                    {wonSkin.category === 'knife' ? '🗡️' : wonSkin.category === 'gloves' ? '🧤' : '🔫'}
+                  </div>
+                  <h3 className="text-3xl font-bold mb-2">{wonSkin.weaponName}</h3>
+                  <p className="text-xl text-muted-foreground">{wonSkin.skinName}</p>
+                  {wonSkin.statTrak && (
+                    <Badge className="mt-4 bg-orange-500 text-lg px-4 py-1">StatTrak™</Badge>
+                  )}
+                </div>
+                <div className="text-2xl font-bold text-accent mb-6">
+                  Стоимость: ${wonSkin.price.toLocaleString()}
+                </div>
+                <div className="flex gap-4">
+                  <Button className="flex-1" size="lg" onClick={() => setWonSkin(null)}>
+                    Забрать
+                  </Button>
+                  <Button className="flex-1" size="lg" variant="outline" onClick={() => { setWonSkin(null); setScreen('inventory'); }}>
+                    <Icon name="Package" className="mr-2" />
+                    В инвентарь
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          <Card className="p-8 bg-gradient-to-br from-primary/10 to-accent/10 border-2 border-primary/50">
+            <h2 className="text-3xl font-bold mb-4">Возможные выпадения</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {weaponSkins.slice(0, 10).map(skin => (
+                <div key={skin.id} className="text-center p-3 bg-muted/50 rounded-lg border-2" style={{ borderColor: rarityColors[skin.rarity] + '40' }}>
+                  <div className="text-4xl mb-2">
+                    {skin.category === 'knife' ? '🗡️' : skin.category === 'gloves' ? '🧤' : '🔫'}
+                  </div>
+                  <p className="text-xs font-bold truncate">{skin.weaponName}</p>
+                  <Badge className="text-xs mt-1" style={{ backgroundColor: rarityColors[skin.rarity] }}>
+                    {rarityNames[skin.rarity]}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {screen === 'menu' && renderMenu()}
       {screen === 'shop' && renderShop()}
       {screen === 'profile' && renderProfile()}
       {screen === 'inventory' && renderInventory()}
+      {screen === 'cases' && renderCases()}
       {screen === 'settings' && renderSettings()}
       {screen === 'leaderboard' && renderLeaderboard()}
       {screen === 'friends' && renderFriends()}
