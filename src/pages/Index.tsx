@@ -6,8 +6,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { Progress } from '@/components/ui/progress';
 
-type GameScreen = 'menu' | 'shop' | 'profile' | 'inventory' | 'settings' | 'leaderboard' | 'friends' | 'team-select' | 'game';
+type GameScreen = 'menu' | 'shop' | 'profile' | 'inventory' | 'settings' | 'leaderboard' | 'friends' | 'team-select' | 'game' | 'cases';
 type Team = 'ct' | 't' | null;
+type Rarity = 'consumer' | 'industrial' | 'milspec' | 'restricted' | 'classified' | 'covert' | 'rare';
+
+interface WeaponSkin {
+  id: string;
+  weaponName: string;
+  skinName: string;
+  category: 'rifle' | 'pistol' | 'smg' | 'sniper' | 'knife' | 'gloves';
+  rarity: Rarity;
+  price: number;
+  wear?: number;
+  statTrak?: boolean;
+  owned: boolean;
+  damage: number;
+  ammo: number;
+}
 
 interface WeaponItem {
   id: string;
